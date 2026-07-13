@@ -1,0 +1,100 @@
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* Optional premium display face — drop Satoshi-Variable.woff2 into public/fonts
+   (free download at fontshare.com/fonts/satoshi). Falls back to Inter if absent. */
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Inter";
+    --font-display: "Satoshi", "Inter";
+    --background: 60 14% 96%; /* #F6F6F3 */
+    --foreground: 80 12% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 80 12% 8%;
+    --primary: 71 100% 59%; /* #D7FF2F */
+    --primary-foreground: 80 30% 8%;
+    --secondary: 70 10% 92%;
+    --secondary-foreground: 80 12% 12%;
+    --muted: 70 10% 92%;
+    --muted-foreground: 75 5% 42%;
+    --accent: 71 100% 92%;
+    --accent-foreground: 80 30% 10%;
+    --destructive: 4 78% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 38%;
+    --border: 70 8% 88%;
+    --input: 70 8% 88%;
+    --ring: 71 100% 42%;
+  }
+
+  .dark {
+    --background: 80 8% 7%;
+    --foreground: 60 12% 94%;
+    --card: 80 7% 11%;
+    --card-foreground: 60 12% 94%;
+    --primary: 71 100% 59%;
+    --primary-foreground: 80 30% 8%;
+    --secondary: 80 6% 16%;
+    --secondary-foreground: 60 12% 90%;
+    --muted: 80 6% 16%;
+    --muted-foreground: 70 5% 60%;
+    --accent: 74 40% 18%;
+    --accent-foreground: 71 100% 80%;
+    --destructive: 4 72% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 55% 48%;
+    --border: 80 6% 18%;
+    --input: 80 6% 18%;
+    --ring: 71 100% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
