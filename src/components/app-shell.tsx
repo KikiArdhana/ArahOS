@@ -9,10 +9,13 @@ import {
   ArrowLeft,
   ArrowLeftRight,
   Check,
+  Coins,
   Delete,
   Fingerprint,
   Home,
+  PiggyBank,
   Target,
+  TrendingUp,
   User,
   Wallet,
 } from "lucide-react";
@@ -27,7 +30,7 @@ import { createClient } from "@/lib/supabase/client";
 const NAV = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/money", label: "Money", icon: Wallet },
-  { href: "/transactions", icon: ArrowLeftRight, center: true },
+  { href: "/transactions", label: "Records", icon: ArrowLeftRight, center: true },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/profile", label: "Profile", icon: User },
 ];
@@ -54,11 +57,12 @@ export function BottomNav() {
                 className="flex flex-col items-center gap-1"
               >
                 {center ? (
-                  /* Center item — transaction logo in a filled circle */
                   <span
                     className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200",
-                      active ? "bg-primary text-primary-foreground" : "bg-foreground text-background",
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-foreground text-background",
                     )}
                   >
                     <Icon className="h-5 w-5" />
@@ -81,7 +85,6 @@ export function BottomNav() {
                 </span>
               </motion.div>
 
-              {/* Green underline — slides between tabs */}
               {active && (
                 <motion.span
                   layoutId="nav-underline"
@@ -169,7 +172,6 @@ export function PinPad({
 
   return (
     <div className="w-full">
-      {/* Dots — pulse in a wave while verifying */}
       <div className="mb-3 flex justify-center gap-3">
         {Array.from({ length }).map((_, i) => (
           <motion.span
@@ -192,7 +194,6 @@ export function PinPad({
         ))}
       </div>
 
-      {/* Status text — keeps layout height stable */}
       <div className="mb-5 h-4 text-center">
         <AnimatePresence>
           {status === "verifying" && (
@@ -208,7 +209,6 @@ export function PinPad({
         </AnimatePresence>
       </div>
 
-      {/* Keypad — locked while verifying */}
       <div
         className={cn(
           "mx-auto grid max-w-[280px] grid-cols-3 gap-3 transition-opacity duration-200",
@@ -257,14 +257,137 @@ export function PinPad({
   );
 }
 
-/* -------------------------------- Lock screen ------------------------------ */
+/* ------------------------------- Splash screen ------------------------------ */
+
+const SPLASH_MIN_MS = 3200; // minimum splash duration (3–5s range)
+
+const TAGLINES = [
+  "Counting your coins…",
+  "Balancing the books…",
+  "Polishing your pockets…",
+  "Lining up your goals…",
+  "Your life OS is waking up…",
+];
+
+const ORBIT_ICONS = [Coins, PiggyBank, TrendingUp, Wallet];
+
+function SplashScreen() {
+  const [taglineIndex, setTaglineIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const t = setInterval(() => setTaglineIndex((i) => (i + 1) % TAGLINES.length), 1100);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6">
+      {/* Soft glow backdrop */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-3xl" />
+
+      {/* Logo + orbiting finance icons */}
+      <div className="relative mb-8 flex h-44 w-44 items-center justify-center">
+        {/* Orbit ring */}
+        <motion.div
+          className="absolute inset-0"
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+        >
+          {ORBIT_ICONS.map((Icon, i) => {
+            const angle = (i / ORBIT_ICONS.length) * 2 * Math.PI;
+            const x = Math.cos(angle) * 78;
+            const y = Math.sin(angle) * 78;
+            return (
+              <motion.span
+                key={i}
+                className="absolute left-1/2 top-1/2 flex h-10 w-10 items-center justify-center rounded-2xl bg-card shadow-card"
+                style={{ x: x - 20, y: y - 20 }}
+                /* counter-rotate so icons stay upright */
+                animate={{ rotate: -360 }}
+                transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+              >
+                <Icon className="h-4 w-4 text-foreground" />
+              </motion.span>
+            );
+          })}
+        </motion.div>
+
+        {/* Logo with heartbeat */}
+        <motion.div
+          initial={{ scale: 0.6, opacity: 0, rotate: -8 }}
+          animate={{ scale: [1, 1.06, 1], opacity: 1, rotate: 0 }}
+          transition={{
+            scale: { repeat: Infinity, duration: 1.6, ease: "easeInOut", delay: 0.5 },
+            opacity: { duration: 0.4 },
+            rotate: { type: "spring", damping: 12 },
+          }}
+          className="flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-primary shadow-float"
+        >
+          <span className="font-display text-3xl font-black text-primary-foreground">A</span>
+        </motion.div>
+      </div>
+
+      {/* Mini bar chart that keeps growing */}
+      <div className="mb-6 flex h-8 items-end gap-1.5">
+        {[0.45, 0.75, 0.55, 1, 0.65].map((h, i) => (
+          <motion.span
+            key={i}
+            className="w-2.5 rounded-full bg-primary"
+            animate={{ height: [`${h * 40}%`, `${h * 100}%`, `${h * 40}%`] }}
+            transition={{
+              repeat: Infinity,
+              duration: 1.2,
+              delay: i * 0.12,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Brand + rotating tagline */}
+      <h1 className="font-display text-2xl font-black tracking-tight">ARAH</h1>
+      <div className="mt-1 h-5">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={taglineIndex}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.25 }}
+            className="text-sm text-muted-foreground"
+          >
+            {TAGLINES[taglineIndex]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+
+      {/* Progress bar filling across the minimum splash time */}
+      <div className="mt-8 h-1.5 w-40 overflow-hidden rounded-full bg-secondary">
+        <motion.div
+          className="h-full rounded-full bg-primary"
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          transition={{ duration: SPLASH_MIN_MS / 1000, ease: "easeInOut" }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------- Lock gate (default: closed) ---------------------- */
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export function LockScreen() {
-  const { profile } = useProfile();
+export function LockGate({ children }: { children: React.ReactNode }) {
+  const { profile, isLoading } = useProfile();
   const { locked, pinRequired, setPinRequired, unlock } = useLockStore();
   const [unlocked, setUnlocked] = React.useState(false); // success flash
+  const [minElapsed, setMinElapsed] = React.useState(false);
+
+  /* Enforce the minimum splash duration once per mount */
+  React.useEffect(() => {
+    const t = setTimeout(() => setMinElapsed(true), SPLASH_MIN_MS);
+    return () => clearTimeout(t);
+  }, []);
 
   React.useEffect(() => {
     if (profile) setPinRequired(Boolean(profile.pin_hash));
@@ -272,10 +395,9 @@ export function LockScreen() {
 
   const verify = async (pin: string) => {
     if (!profile?.pin_hash) return;
-    // Minimum 700ms so the checking animation is visible
     const [ok] = await Promise.all([bcrypt.compare(pin, profile.pin_hash), sleep(700)]);
     if (ok) {
-      setUnlocked(true); // show the green check
+      setUnlocked(true);
       await sleep(650);
       unlock();
       setUnlocked(false);
@@ -290,55 +412,61 @@ export function LockScreen() {
     window.location.href = "/login";
   };
 
-  return (
-    <AnimatePresence>
-      {pinRequired && locked && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.04 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-background px-6"
-        >
-          {unlocked ? (
-            <motion.div
-              initial={{ scale: 0.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", damping: 14 }}
-              className="flex flex-col items-center gap-3"
-            >
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-primary shadow-float">
-                <motion.span
-                  initial={{ scale: 0, rotate: -30 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.1, type: "spring", damping: 12 }}
-                >
-                  <Check className="h-10 w-10 text-primary-foreground" strokeWidth={3} />
-                </motion.span>
-              </span>
-              <p className="font-display text-lg font-bold">Welcome back</p>
-            </motion.div>
-          ) : (
-            <>
-              <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-card">
-                <span className="font-display text-2xl font-black">A</span>
-              </div>
-              <h2 className="font-display text-xl font-bold">
-                Hi, {profile?.display_name?.split(" ")[0]}
-              </h2>
-              <p className="mb-8 text-sm text-muted-foreground">Enter your PIN to unlock</p>
-              <PinPad onComplete={verify} statusText="Checking your PIN…" />
-              <button
-                type="button"
-                onClick={signOut}
-                className="mt-8 text-sm font-semibold text-muted-foreground underline-offset-2 hover:underline"
+  /* 1) Splash: waits for BOTH the profile AND the minimum duration.
+        Content never flashes before the PIN. */
+  if (isLoading || !profile || !minElapsed) {
+    return <SplashScreen />;
+  }
+
+  /* 2) PIN set and session not unlocked yet → PIN screen, nothing behind it. */
+  if (pinRequired && locked) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex min-h-dvh flex-col items-center justify-center bg-background px-6"
+      >
+        {unlocked ? (
+          <motion.div
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", damping: 14 }}
+            className="flex flex-col items-center gap-3"
+          >
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-primary shadow-float">
+              <motion.span
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.1, type: "spring", damping: 12 }}
               >
-                Sign out instead
-              </button>
-            </>
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+                <Check className="h-10 w-10 text-primary-foreground" strokeWidth={3} />
+              </motion.span>
+            </span>
+            <p className="font-display text-lg font-bold">Welcome back</p>
+          </motion.div>
+        ) : (
+          <>
+            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-card">
+              <span className="font-display text-2xl font-black">A</span>
+            </div>
+            <h2 className="font-display text-xl font-bold">
+              Hi, {profile.display_name?.split(" ")[0]}
+            </h2>
+            <p className="mb-8 text-sm text-muted-foreground">Enter your PIN to unlock</p>
+            <PinPad onComplete={verify} statusText="Checking your PIN…" />
+            <button
+              type="button"
+              onClick={signOut}
+              className="mt-8 text-sm font-semibold text-muted-foreground underline-offset-2 hover:underline"
+            >
+              Sign out instead
+            </button>
+          </>
+        )}
+      </motion.div>
+    );
+  }
+
+  /* 3) Known + unlocked (or no PIN) → the actual app. */
+  return <>{children}</>;
 }
