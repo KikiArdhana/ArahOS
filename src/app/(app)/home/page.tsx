@@ -3,7 +3,18 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowDownLeft, ArrowUpRight, Bell, ChevronRight, Target } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Bell,
+  ChevronRight,
+  Gem,
+  HandCoins,
+  Receipt,
+  Target,
+  Wallet,
+  Wrench,
+} from "lucide-react";
 import { Badge, Card, Progress, Skeleton } from "@/components/ui/primitives";
 import { useTable } from "@/hooks/use-table";
 import { useProfile } from "@/hooks/use-profile";
@@ -29,7 +40,6 @@ function useClock() {
 }
 
 /* ------------------------- Apple-style emoji everywhere --------------------- */
-/* Renders Apple's emoji artwork on any OS (Windows/Android included) via CDN.  */
 
 function AppleEmoji({
   emoji,
@@ -89,15 +99,13 @@ function GoalIcon({ icon, size = 24 }: { icon: string | null | undefined; size?:
 /* --------------------------------- Menu grid -------------------------------- */
 
 const MENU = [
-  { href: "/money", label: "Money", emoji: "💵", tint: "bg-lime-100" },
-  { href: "/goals", label: "Goals", emoji: "🎯", tint: "bg-orange-100" },
-  { href: "/assets", label: "Assets", emoji: "💎", tint: "bg-sky-100" },
-  { href: "/debts", label: "Debts", emoji: "🤝", tint: "bg-amber-100" },
-  { href: "/bills", label: "Bills", emoji: "🧾", tint: "bg-violet-100" },
-  { href: "/maintenance", label: "Care", emoji: "🔧", tint: "bg-rose-100" },
+  { href: "/money", label: "Money", icon: Wallet },
+  { href: "/goals", label: "Goals", icon: Target },
+  { href: "/assets", label: "Assets", icon: Gem },
+  { href: "/debts", label: "Debts", icon: HandCoins },
+  { href: "/bills", label: "Bills", icon: Receipt },
+  { href: "/maintenance", label: "Care", icon: Wrench },
 ];
-
-/* ---------------------------------- Page ------------------------------------ */
 
 export default function HomePage() {
   const now = useClock();
@@ -126,7 +134,10 @@ export default function HomePage() {
     match: { status: "unread" },
   });
 
-  const cashTotal = accounts.items.reduce((s, a) => s + Number(a.balance), 0);
+  /* Personal money only counts toward net worth */
+  const personalCash = accounts.items
+    .filter((a) => (a.owner?.trim() || "Personal") === "Personal")
+    .reduce((s, a) => s + Number(a.balance), 0);
   const assetTotal = assets.items.reduce((s, a) => s + Number(a.value), 0);
   const theyOwe = debts.items
     .filter((d) => d.direction === "they_owe")
@@ -134,7 +145,7 @@ export default function HomePage() {
   const iOwe = debts.items
     .filter((d) => d.direction === "i_owe")
     .reduce((s, d) => s + (Number(d.amount) - Number(d.paid_amount)), 0);
-  const netWorth = cashTotal + assetTotal + theyOwe - iOwe;
+  const netWorth = personalCash + assetTotal + theyOwe - iOwe;
 
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthTx = transactions.items.filter((t) => new Date(t.occurred_at) >= monthStart);
@@ -238,23 +249,23 @@ export default function HomePage() {
         <Card className="relative overflow-hidden bg-foreground text-background">
           <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-primary/25 blur-2xl" />
           <p className="text-xs font-semibold uppercase tracking-widest text-background/60">
-            Net worth
+            Net worth · Personal
           </p>
           {loading ? (
             <Skeleton className="mt-2 h-10 w-48 bg-background/20" />
           ) : (
-            <p className="mt-2 font-display text-4xl font-black tracking-tight tabular">
+            <p className="mt-1 font-display text-4xl font-black tracking-tight tabular">
               {formatMoney(netWorth)}
             </p>
           )}
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-background/10 p-3">
+            <div className="rounded-3xl bg-background/10 p-3">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-background/70">
                 <ArrowDownLeft className="h-3.5 w-3.5 text-primary" /> Income · month
               </div>
               <p className="mt-1 font-semibold tabular">{formatMoney(income)}</p>
             </div>
-            <div className="rounded-2xl bg-background/10 p-3">
+            <div className="rounded-3xl bg-background/10 p-3">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-background/70">
                 <ArrowUpRight className="h-3.5 w-3.5 text-red-400" /> Spent · month
               </div>
@@ -264,54 +275,35 @@ export default function HomePage() {
         </Card>
       </motion.div>
 
-  {/* Menu grid — e-wallet style: floating icons on one clean card */}
-<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-  <Card
-  className="
-    rounded-2xl
-    bg-white
-    border border-zinc-200/70
-    shadow-sm
-    hover:border-emerald-200
-    hover:shadow-md
-    hover:-translate-y-0.5
-    transition-all duration-300 ease-out
-    cursor-pointer
-    px-3 py-3
-  "
->
-    <div className="grid grid-cols-3">
-      {MENU.map((m, i) => (
-        <motion.div
-          key={m.href}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.04 * i }}
-        >
-          <Link
-            href={m.href}
-            className="group flex flex-col items-center gap-2 rounded-2xl py-4 transition-all active:scale-90"
+      {/* Menu grid — DeoPay-style white squircles, no wrapping card */}
+      <div className="grid grid-cols-3 gap-x-3 gap-y-5">
+        {MENU.map((m, i) => (
+          <motion.div
+            key={m.href}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.04 * i }}
           >
-            <AppleEmoji
-              emoji={m.emoji}
-              size={34}
-              className="drop-shadow-sm transition-transform duration-200 group-hover:-translate-y-1 group-hover:scale-110"
-            />
-            <span className="text-xs font-semibold tracking-tight text-foreground">
-              {m.label}
-            </span>
-          </Link>
-        </motion.div>
-      ))}
-    </div>
-  </Card>
-</motion.div>
+            <Link
+              href={m.href}
+              className="group flex flex-col items-center gap-2 transition-transform active:scale-95"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-card shadow-card transition-all group-hover:-translate-y-0.5 group-hover:shadow-float">
+                <m.icon className="h-6 w-6 text-foreground" strokeWidth={1.8} />
+              </span>
+              <span className="text-xs font-semibold tracking-tight text-foreground">
+                {m.label}
+              </span>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
 
       {/* Goals — horizontal swipe cards */}
       {goals.items.length > 0 && (
         <section>
           <SectionHeader title="Goals" href="/goals" />
-          <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 no-scrollbar">
+          <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 no-scrollbar">
             {goals.items.map((g, i) => {
               const pct = Math.min(
                 (Number(g.current_amount) / Number(g.target_amount)) * 100,
@@ -326,18 +318,7 @@ export default function HomePage() {
                   className="shrink-0 snap-start"
                 >
                   <Link href="/goals">
-                  <Card
-  className="
-    w-44
-    rounded-3xl
-    bg-white
-    border border-green-200/60
-    shadow-[0_4px_20px_rgba(34,197,94,0.08),0_1px_2px_rgba(0,0,0,0.03)]
-    transition-all
-    duration-300
-    p-4
-  "
->
+                    <Card className="w-44 rounded-3xl p-4">
                       <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-accent">
                         <GoalIcon icon={g.icon} size={26} />
                       </span>
@@ -380,7 +361,10 @@ export default function HomePage() {
                     <p className="text-xs text-muted-foreground">
                       {formatDate(r.date)}
                       {r.amount != null && (
-                        <span className="tabular"> · {formatMoney(r.amount, { compact: true })}</span>
+                        <span className="tabular">
+                          {" "}
+                          · {formatMoney(r.amount, { compact: true })}
+                        </span>
                       )}
                     </p>
                   </div>
@@ -396,10 +380,10 @@ export default function HomePage() {
 
       {/* Recent activity */}
       <section>
-        <SectionHeader title="Recent activity" href="/money" />
+        <SectionHeader title="Recent activity" href="/transactions" />
         {transactions.items.length === 0 ? (
           <Card className="rounded-3xl py-8 text-center text-sm text-muted-foreground">
-            No transactions yet. Tap + to record your first one.
+            No transactions yet. Open Records to add your first one.
           </Card>
         ) : (
           <Card className="divide-y divide-border rounded-3xl p-0">
