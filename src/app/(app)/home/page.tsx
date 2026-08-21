@@ -14,6 +14,7 @@ import {
   Target,
   Wallet,
   Wrench,
+  Eye, EyeOff,
 } from "lucide-react";
 import { Badge, Card, Progress, Skeleton } from "@/components/ui/primitives";
 import { useTable } from "@/hooks/use-table";
@@ -201,6 +202,20 @@ export default function HomePage() {
   const loading = accounts.isLoading || assets.isLoading;
   const unread = notifications.items.length;
 
+  const [hideNetWorth, setHideNetWorth] = React.useState(false);
+
+React.useEffect(() => {
+  setHideNetWorth(localStorage.getItem("arah:hide-networth") === "1");
+}, []);
+
+const toggleHideNetWorth = () => {
+  setHideNetWorth((v) => {
+    const next = !v;
+    localStorage.setItem("arah:hide-networth", next ? "1" : "0");
+    return next;
+  });
+};
+
   return (
     <div className="space-y-6">
       {/* Greeting */}
@@ -245,35 +260,52 @@ export default function HomePage() {
       </header>
 
       {/* Net worth hero */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="relative overflow-hidden bg-foreground text-background">
-          <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-primary/25 blur-2xl" />
-          <p className="text-xs font-semibold uppercase tracking-widest text-background/60">
-            Net worth · Personal
-          </p>
-          {loading ? (
-            <Skeleton className="mt-2 h-10 w-48 bg-background/20" />
-          ) : (
-            <p className="mt-1 font-display text-4xl font-black tracking-tight tabular">
-              {formatMoney(netWorth)}
-            </p>
-          )}
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-3xl bg-background/10 p-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-background/70">
-                <ArrowDownLeft className="h-3.5 w-3.5 text-primary" /> Income · month
-              </div>
-              <p className="mt-1 font-semibold tabular">{formatMoney(income)}</p>
-            </div>
-            <div className="rounded-3xl bg-background/10 p-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-background/70">
-                <ArrowUpRight className="h-3.5 w-3.5 text-red-400" /> Spent · month
-              </div>
-              <p className="mt-1 font-semibold tabular">{formatMoney(expense)}</p>
-            </div>
-          </div>
-        </Card>
-      </motion.div>
+<motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+  <Card className="relative overflow-hidden bg-foreground text-background">
+    <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-primary/25 blur-2xl" />
+
+    <div className="flex items-center gap-2">
+      <p className="text-xs font-semibold uppercase tracking-widest text-background/60">
+        Net worth · Personal
+      </p>
+      <button
+        type="button"
+        aria-label={hideNetWorth ? "Show net worth" : "Hide net worth"}
+        onClick={toggleHideNetWorth}
+        className="text-background/50 transition-colors text-white hover:text-background"
+      >
+        {hideNetWorth ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </button>
+    </div>
+
+    {loading ? (
+      <Skeleton className="mt-2 h-10 w-48 bg-background/20" />
+    ) : (
+      <p className="mt-1 font-display text-4xl font-black tracking-tight tabular">
+        {hideNetWorth ? "Rp ••••••••" : formatMoney(netWorth)}
+      </p>
+    )}
+
+    <div className="mt-5 grid grid-cols-2 gap-3">
+      <div className="rounded-3xl bg-background/10 p-3">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-background/70">
+          <ArrowDownLeft className="h-3.5 w-3.5 text-primary" /> Income · month
+        </div>
+        <p className="mt-1 font-semibold tabular">
+          {hideNetWorth ? "••••••" : formatMoney(income)}
+        </p>
+      </div>
+      <div className="rounded-3xl bg-background/10 p-3">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-background/70">
+          <ArrowUpRight className="h-3.5 w-3.5 text-red-400" /> Spent · month
+        </div>
+        <p className="mt-1 font-semibold tabular">
+          {hideNetWorth ? "••••••" : formatMoney(expense)}
+        </p>
+      </div>
+    </div>
+  </Card>
+</motion.div>
 
       {/* Menu grid — DeoPay-style white squircles, no wrapping card */}
       <div className="grid grid-cols-3 gap-x-3 gap-y-5">
@@ -303,7 +335,7 @@ export default function HomePage() {
       {goals.items.length > 0 && (
         <section>
           <SectionHeader title="Goals" href="/goals" />
-          <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 no-scrollbar">
+          <div className="-mx-5 flex snap-x snap-mandatory gap-3 ml-1 overflow-x-auto px-5 pb-1 no-scrollbar">
             {goals.items.map((g, i) => {
               const pct = Math.min(
                 (Number(g.current_amount) / Number(g.target_amount)) * 100,

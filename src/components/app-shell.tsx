@@ -154,19 +154,30 @@ export function PinPad({
   const [status, setStatus] = React.useState<PinStatus>("idle");
 
   const press = (d: string) => {
-    if (status !== "idle" || pin.length >= length) return;
-    const next = pin + d;
-    setPin(next);
-    if (next.length === length) {
-      setStatus("verifying");
-      Promise.resolve(onComplete(next))
-        .catch(() => undefined)
-        .finally(() => {
-          setPin("");
-          setStatus("idle");
-        });
-    }
-  };
+  if (status !== "idle" || pin.length >= length) return;
+
+  // Tiny haptic feedback
+  if (
+    typeof navigator !== "undefined" &&
+    "vibrate" in navigator
+  ) {
+    navigator.vibrate(10);
+  }
+
+  const next = pin + d;
+  setPin(next);
+
+  if (next.length === length) {
+    setStatus("verifying");
+
+    Promise.resolve(onComplete(next))
+      .catch(() => undefined)
+      .finally(() => {
+        setPin("");
+        setStatus("idle");
+      });
+  }
+};
 
   const busy = status !== "idle";
 
@@ -247,7 +258,13 @@ export function PinPad({
           type="button"
           disabled={busy}
           aria-label="Delete digit"
-          onClick={() => setPin((p) => p.slice(0, -1))}
+          onClick={() => {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(10);
+  }
+
+  setPin((p) => p.slice(0, -1));
+}}
           className="flex h-16 items-center justify-center rounded-3xl text-muted-foreground"
         >
           <Delete className="h-6 w-6" />
