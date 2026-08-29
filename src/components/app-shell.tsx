@@ -157,11 +157,8 @@ export function PinPad({
   if (status !== "idle" || pin.length >= length) return;
 
   // Tiny haptic feedback
-  if (
-    typeof navigator !== "undefined" &&
-    "vibrate" in navigator
-  ) {
-    navigator.vibrate(10);
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(20);
   }
 
   const next = pin + d;
