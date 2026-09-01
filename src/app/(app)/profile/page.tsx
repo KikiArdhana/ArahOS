@@ -403,6 +403,8 @@ function EraseDataSheet({ open, onClose }: { open: boolean; onClose: () => void 
   );
 }
 
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+
 function EditProfileSheet({
   open,
   onClose,
@@ -414,9 +416,12 @@ function EditProfileSheet({
   initial: { display_name: string; username: string; avatar_url: string };
   onSubmit: (v: Record<string, unknown>) => Promise<void>;
 }) {
+  const supabase = createClient();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = React.useState(initial.display_name);
   const [username, setUsername] = React.useState(initial.username);
   const [avatarUrl, setAvatarUrl] = React.useState(initial.avatar_url);
+  const [uploading, setUploading] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
 
   React.useEffect(() => {
@@ -424,6 +429,38 @@ function EditProfileSheet({
     setUsername(initial.username);
     setAvatarUrl(initial.avatar_url);
   }, [initial.display_name, initial.username, initial.avatar_url, open]);
+
+  const pickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return toast.error("Please choose an image file");
+    if (file.size > MAX_AVATAR_BYTES) return toast.error("Image must be under 5MB");
+
+    setUploading(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
+
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(path);
+      setAvatarUrl(publicUrl);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const submit = async () => {
     if (!displayName.trim()) return toast.error("Display name can't be empty");
@@ -442,6 +479,47 @@ function EditProfileSheet({
   return (
     <BottomSheet open={open} onClose={onClose} title="Edit profile">
       <div className="space-y-4">
+        <Field label="Profile photo">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-foreground text-background">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="font-display text-xl font-black">
+                  {(displayName || "?").slice(0, 1).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                loading={uploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Choose from gallery
+              </Button>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => setAvatarUrl("")}
+                  className="text-xs font-semibold text-muted-foreground underline underline-offset-2"
+                >
+                  Remove photo
+                </button>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={pickPhoto}
+            />
+          </div>
+        </Field>
         <Field label="Display name">
           <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
         </Field>
@@ -450,13 +528,6 @@ function EditProfileSheet({
             value={username}
             autoCapitalize="none"
             onChange={(e) => setUsername(e.target.value)}
-          />
-        </Field>
-        <Field label="Avatar URL">
-          <Input
-            placeholder="https://…"
-            value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
           />
         </Field>
         <Button size="lg" className="w-full" loading={busy} onClick={submit}>
