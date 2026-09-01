@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app-shell";
 import { Button, Card, Field, Input, Select, Skeleton } from "@/components/ui/primitives";
 import { BottomSheet, ConfirmSheet } from "@/components/ui/sheet";
+import { useBalanceVisibilityStore } from "@/stores/balance-visibility-store";
 import { useTable } from "@/hooks/use-table";
 import { cn, formatDate, formatMoney } from "@/lib/utils";
 import type { Account, Transaction, Transfer } from "@/lib/types";
@@ -40,7 +41,8 @@ const POCKET_COLORS = ["#EDE7FF", "#FFF3D6", "#DFF5FF", "#FFE4EC", "#EAF7D9", "#
 
 export default function MoneyPage() {
   const [ownerFilter, setOwnerFilter] = React.useState<string>("All");
-  const [hideBalance, setHideBalance] = React.useState(false);
+  const hideBalance = useBalanceVisibilityStore((s) => s.hidden);
+  const toggleHideBalance = useBalanceVisibilityStore((s) => s.toggle);
   const [accountSheet, setAccountSheet] = React.useState(false);
   const [editingAccount, setEditingAccount] = React.useState<Account | null>(null);
   const [deleteAccount, setDeleteAccount] = React.useState<Account | null>(null);
@@ -97,7 +99,7 @@ export default function MoneyPage() {
           <button
             type="button"
             aria-label={hideBalance ? "Show balance" : "Hide balance"}
-            onClick={() => setHideBalance((v) => !v)}
+            onClick={toggleHideBalance}
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             {hideBalance ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -153,7 +155,7 @@ export default function MoneyPage() {
                   type="button"
                   aria-label={`History of ${a.name}`}
                   onClick={() => setHistoryAccount(a)}
-                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 text-foreground shadow-card transition-transform active:scale-90"
+                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 text-black shadow-card transition-transform active:scale-90"
                 >
                   <History className="h-3.5 w-3.5" />
                 </button>
@@ -168,13 +170,13 @@ export default function MoneyPage() {
                   className="block w-full text-left"
                 >
                   <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/60">
-                    <Icon className="h-5 w-5 text-foreground" />
+                    <Icon className="h-5 w-5 text-black" />
                   </span>
-                  <p className="mt-3 truncate text-sm font-semibold text-foreground">{a.name}</p>
-                  <p className="text-[11px] text-foreground/60">
+                  <p className="mt-3 truncate text-sm font-semibold text-black">{a.name}</p>
+                  <p className="text-[11px] text-black/60">
                     {a.owner?.trim() || "Personal"} · <span className="capitalize">{a.type}</span>
                   </p>
-                  <p className="mt-1 truncate font-display text-base font-bold text-foreground tabular">
+                  <p className="mt-1 truncate font-display text-base font-bold text-black tabular">
                     {hideBalance ? "••••••" : formatMoney(Number(a.balance))}
                   </p>
                 </button>

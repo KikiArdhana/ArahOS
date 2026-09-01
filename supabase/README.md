@@ -1,6 +1,7 @@
 # Database
 
 - `migrations/00000000000001_init.sql` — full schema: enums, tables, indexes, FKs, RLS policies, triggers, functions.
+- `migrations/00000000000002_avatar_storage.sql` — public `avatars` storage bucket + RLS so users can upload a profile photo.
 - `seed.sql` — optional sample data. Register your account first, then run it.
 
 ## Apply
